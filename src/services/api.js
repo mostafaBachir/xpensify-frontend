@@ -2,9 +2,9 @@
 
 import axios from "axios";
 import useAuthStore from "@/store/authStore";
-import {jwtDecode} from "jwt-decode";
+import { jwtDecode } from "jwt-decode";
 
-const URL_API = "http://localhost:8001/api" 
+const URL_API = "http://localhost:8001/api";
 
 const api = axios.create({
   baseURL: URL_API,
@@ -13,16 +13,16 @@ const api = axios.create({
   },
 });
 
-// Intercepteur de requête : ajouter le token
+// Intercepteur de requête : ajouter le token depuis Zustand
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem("auth_token");
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
+  const { accessToken } = useAuthStore.getState();
+  if (accessToken) {
+    config.headers.Authorization = `Bearer ${accessToken}`;
   }
   return config;
 });
 
-// Intercepteur de réponse : gérer les expirations de token
+// Intercepteur de réponse : gérer les expirations de token via Zustand
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
@@ -33,21 +33,25 @@ api.interceptors.response.use(
     ) {
       originalRequest._retry = true;
       try {
-        const refreshToken = localStorage.getItem("refresh_token");
+        const { refreshToken, login, logout } = useAuthStore.getState();
         if (!refreshToken) throw new Error("No refresh token");
 
-        const res = await axios.post("http://localhost:8001/api/auth/refresh", {
+        const res = await axios.post(`${URL_API}/auth/refresh`, {
           refresh_token: refreshToken,
         });
 
-        const { access_token } = res.data;
-        localStorage.setItem("auth_token", access_token);
+        const { access_token, refresh_token: newRefreshToken } = res.data;
 
         const decoded = jwtDecode(access_token);
-        useAuthStore.getState().login({
-          id: decoded.user_id,
-          email: decoded.email,
-        }, access_token, refreshToken);
+        login(
+          {
+            id: decoded.user_id,
+            email: decoded.email,
+            role: decoded.role || "user",
+          },
+          access_token,
+          newRefreshToken || refreshToken
+        );
 
         originalRequest.headers.Authorization = `Bearer ${access_token}`;
         return api(originalRequest);

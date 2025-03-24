@@ -21,23 +21,10 @@ export default function LoginPage() {
     setError("");
 
     try {
-      const res = await fetch("http://127.0.0.1:8001/api/auth/login/", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.error || "Échec de la connexion");
-      }
-
-      const { access_token, refresh_token } = data;
-      login({ email }, access_token, refresh_token);
+      const { access_token, refresh_token } = await login({ email, password });
       router.push("/dashboard");
     } catch (err) {
-      setError(err.message);
+      setError(err.error || err.message || "Échec de la connexion");
     }
   };
 

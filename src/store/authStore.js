@@ -2,7 +2,7 @@
 
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import {jwtDecode} from "jwt-decode";
+import { jwtDecode } from "jwt-decode";
 import api from "@/services/api";
 
 const useAuthStore = create(
@@ -14,24 +14,36 @@ const useAuthStore = create(
       isAuthenticated: false,
       permissions: [],
 
-      login: (userData, accessToken, refreshToken = null) => {
-        let permissions = [];
+      login: async ({ email, password }) => {
         try {
-          const decoded = jwtDecode(accessToken);
-          permissions = decoded.permissions || [];
-          userData.id = decoded.user_id;
-          userData.email = decoded.email;
-        } catch (err) {
-          console.error("Erreur de décodage du token:", err);
-        }
+          const res = await api.post("/auth/login/", { email, password });
+          const { access_token, refresh_token } = res.data;
 
-        set({
-          user: userData,
-          accessToken,
-          refreshToken,
-          permissions,
-          isAuthenticated: true,
-        });
+          let permissions = [];
+          const userData = { email };
+
+          try {
+            const decoded = jwtDecode(access_token);
+            permissions = decoded.permissions || [];
+            userData.id = decoded.user_id;
+            userData.email = decoded.email;
+            userData.role = decoded.role || "user"; // Nouveau : rôle
+          } catch (err) {
+            console.error("Erreur de décodage du token:", err);
+          }
+
+          set({
+            user: userData,
+            accessToken: access_token,
+            refreshToken: refresh_token,
+            permissions,
+            isAuthenticated: true,
+          });
+
+          return { access_token, refresh_token };
+        } catch (error) {
+          throw error.response?.data || { error: "Échec de la connexion" };
+        }
       },
 
       register: async (name, email, password) => {
@@ -74,6 +86,25 @@ const useAuthStore = create(
           console.error("Token invalide", err);
           state.logout();
         }
+      },
+
+      me: async () => {
+        try {
+          const res = await api.get("/auth/me");
+          const user = res.data;
+          set((state) => ({
+            user: { ...state.user, ...user },
+          }));
+        } catch (error) {
+          console.error("Erreur lors du chargement du profil :", error);
+        }
+      },
+
+      hasPermission: (service, action) => {
+        const permissions = get().permissions;
+        return permissions.some(
+          (perm) => perm.service_id === service && perm.action === action
+        );
       },
     }),
     {

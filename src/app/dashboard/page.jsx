@@ -27,7 +27,7 @@ export default function DashboardPage() {
   const handleFileChange = (e) => {
     const uploadedFile = e.target.files[0];
     setFile(uploadedFile);
-    // TODO: envoyer le fichier au backend pour traitement IA
+
   };
 
   return (
