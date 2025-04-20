@@ -1,0 +1,63 @@
+[
+    {
+        "email": "mostafa.bachir@gmail.com",
+        "id": 1,
+        "name": "Bachir Mostafa",
+        "permissions": [
+            {
+                "permission": "read",
+                "service": "Xpensify Receipt API",
+                "service_id": "1"
+            },
+            {
+                "permission": "write",
+                "service": "Xpensify Receipt API",
+                "service_id": "1"
+            },
+            {
+                "permission": "manage",
+                "service": "Xpensify Dashboard",
+                "service_id": "2"
+            }
+        ],
+        "role": "superuser"
+    },
+    {
+        "email": "alice@example.com",
+        "id": 2,
+        "name": "Alice Admin",
+        "permissions": [
+            {
+                "permission": "read",
+                "service": "Xpensify Receipt API",
+                "service_id": "1"
+            },
+            {
+                "permission": "read",
+                "service": "Xpensify Dashboard",
+                "service_id": "2"
+            }
+        ],
+        "role": "admin"
+    },
+    {
+        "email": "bob@example.com",
+        "id": 3,
+        "name": "Bob Viewer",
+        "permissions": [
+            {
+                "permission": "read",
+                "service": "Xpensify Receipt API",
+                "service_id": "1"
+            }
+        ],
+        "role": "user"
+    },
+    {
+        "email": "test@example.com",
+        "id": 4,
+        "name": "test user",
+        "permissions": [],
+        "role": "user"
+    }
+]

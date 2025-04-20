@@ -1,0 +1,40 @@
+trigger:
+  branches:
+    include:
+      - main
+
+pool:
+  name: Default
+
+variables:
+  ACR_LOGIN_SERVER: xpensifyacr.azurecr.io
+  IMAGE_NAME: xpensify-frontend
+  TAG: latest
+
+steps:
+  - script: |
+      echo "✅ Variables :"
+      echo "ACR_LOGIN_SERVER=$ACR_LOGIN_SERVER"
+      echo "IMAGE_NAME=$IMAGE_NAME"
+      echo "TAG=$TAG"
+
+      echo "🔐 Login ACR..."
+      az acr login --name xpensifyacr
+
+      echo "🐳 Build Docker image..."
+      docker build --no-cache -t $ACR_LOGIN_SERVER/$IMAGE_NAME:$TAG .
+
+      echo "📤 Push Docker image..."
+      docker push $ACR_LOGIN_SERVER/$IMAGE_NAME:$TAG
+    displayName: "🚀 Build & Push Docker latest"
+    env:
+      ACR_LOGIN_SERVER: $(ACR_LOGIN_SERVER)
+      IMAGE_NAME: $(IMAGE_NAME)
+      TAG: $(TAG)
+
+  - task: AzureWebAppContainer@1
+    displayName: "🌐 Deploy to Azure Web App"
+    inputs:
+      azureSubscription: 'xpensify-subscription'
+      appName: 'xpensify-frontend'
+      containers: '$(ACR_LOGIN_SERVER)/$(IMAGE_NAME):$(TAG)'
